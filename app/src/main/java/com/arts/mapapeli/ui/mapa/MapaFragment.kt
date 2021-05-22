@@ -15,9 +15,8 @@ import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.util.SparseIntArray
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -84,6 +83,14 @@ class MapaFragment : Fragment(),
         var mMapFragment = childFragmentManager.findFragmentById(R.id.fragment_mapHome) as SupportMapFragment
         mMapFragment.getMapAsync(this)
         fusedLocationCliente = LocationServices.getFusedLocationProviderClient(requireActivity()) //esta propiedad sirve para iniciar o detener la ubicacion del usuario cada vez que sea conveniente. Pero primero se debe obtener los permisos de ubicacion por parte del usuario
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
+            if(getRotation(requireContext()).equals("vertical")){ //es vertical o portrait.
+                Log.i("orientacion", "vertical")
+            }else if(getRotation(requireContext()).equals("horizontal")){
+                Log.i("orientacion", "horizontal")
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -231,7 +238,8 @@ class MapaFragment : Fragment(),
             destino,
             MyApp.context.resources.getString(R.string.google_maps_key)
         ).observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-                when(it){
+            Log.i("rotacion", "rotacion del mapa")
+            when(it){
                     is Resource.Loading ->{
                         Log.i("mapa", "Cargando mapa")
                     }
@@ -295,9 +303,6 @@ class MapaFragment : Fragment(),
                 override fun onFailure(call: Call<String?>, t: Throwable) {}
             })*/
     }
-
-
-
 
     override fun onMyLocationButtonClick(): Boolean {
         Toast.makeText(requireContext(), "Centrar mi ubicación", Toast.LENGTH_SHORT).show()
@@ -549,5 +554,26 @@ class MapaFragment : Fragment(),
     companion object {
         private const val MY_PERMISSIONS_LOCATION_REQUEST_CODE = 100
         private const val SETTINGS_GPS_REQUEST_CODE = 101
+
+        val orientacion: SparseIntArray = SparseIntArray().apply {
+            append(Surface.ROTATION_0, 0)
+            append(Surface.ROTATION_90, 90)
+            append(Surface.ROTATION_180, 180)
+            append(Surface.ROTATION_270, 270)
+        }
+
+        fun getRotation(context: Context): String? {
+            val mWindowManager = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+            val mDisplay = mWindowManager.defaultDisplay  //Display mDisplay = mWindowManager.getDefaultDisplay(); //OrientationEventListener
+            val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+                .defaultDisplay.rotation
+            return when (rotation) {
+                Surface.ROTATION_0 -> "vertical"
+                Surface.ROTATION_90 -> "horizontal"
+                Surface.ROTATION_180 -> "vertical inversa"
+                else -> "horizontal inversa"
+            }
+        }
+
     }
 }

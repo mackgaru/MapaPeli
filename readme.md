@@ -12,3 +12,4 @@
  Muestra un listado de peliculas y cuando de click sobre una pelicula puede obtener más informacion y detalle.
 
 **➢ Screenshots que visualice las vistas solicitadas.**
+[Mapa - Home](https://github.com/mackgaru/MapaPeli/blob/master/Imagenes/Screenshot_20210522-184154.png)

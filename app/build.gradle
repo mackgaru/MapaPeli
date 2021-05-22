@@ -1,0 +1,109 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'androidx.navigation.safeargs.kotlin' //plugin API navegacion
+    id 'kotlin-parcelize'
+    id 'kotlin-kapt'
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+    defaultConfig {
+        applicationId "com.arts.mapapeli"
+        minSdkVersion 21
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/java'
+        //main.kotlin.srcDirs += 'src/main/kotlin'
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs = ['-Xjvm-default=enable']  // par kotlin 1.4- .Especifica que se debe generar un método predeterminado de JVM para el miembro de interfaz de Kotlin no abstracto.
+    }
+    buildFeatures {
+        viewBinding = true
+        dataBinding = true
+    }
+
+}
+
+dependencies {
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'//API compilables creadas sobre Activity
+
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    //NAVIGATION COMPONENTS
+    def nav_version = "2.3.5"
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-dynamic-features-fragment:$nav_version" //Feature module Support
+    androidTestImplementation "androidx.navigation:navigation-testing:$nav_version" //Testing Navigation
+    implementation "androidx.navigation:navigation-compose:1.0.0-alpha10" //Jetpack Compose Integration
+
+    //VIEWMODLE & LIVEDATA
+    def lifecycle_version = "2.3.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"//ViewModel
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"//LiveData
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"//Saved state module for ViewModel
+
+    //COROUTINES
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"//Lifecycles only (without ViewModel or LiveData)
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
+
+    //ROOM
+    def room_version = "2.3.0"
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"//optional - Kotlin Extensions and Coroutines support for Room
+    testImplementation "androidx.room:room-testing:$room_version"//optional - Test helpers
+
+    //RETROFIT
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.google.code.gson:gson:2.8.6'//transformar el json
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'//convierte el array de json a un objeto
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.1'//para ver el log http
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+
+    //SERVICES GOOGLE MOBILE
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+
+    //UTILS
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0' //with concat adapter
+    implementation "androidx.recyclerview:recyclerview-selection:1.1.0"  // For control over item selection of both touch and mouse driven selection
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+
+}

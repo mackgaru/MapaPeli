@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/navigation_mapa">
+
+    <fragment
+        android:id="@+id/navigation_mapa"
+        android:name="com.arts.mapapeli.ui.mapa.MapaFragment"
+        android:label="@string/title_mapa"
+        tools:layout="@layout/fragment_mapa" >
+        <action
+            android:id="@+id/action_navigation_mapa_to_mapaDetalleFragment"
+            app:destination="@id/mapaDetalleFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mapaDetalleFragment"
+        android:name="com.arts.mapapeli.ui.mapa.MapaDetalleFragment"
+        android:label="fragment_mapa_detalle"
+        tools:layout="@layout/fragment_mapa_detalle" >
+        <argument
+            android:name="data"
+            app:argType="android.os.Bundle" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_peliculas"
+        android:name="com.arts.mapapeli.ui.peliculas.PeliculasFragment"
+        android:label="@string/title_peliculas"
+        tools:layout="@layout/fragment_peliculas" >
+        <action
+            android:id="@+id/action_navigation_peliculas_to_peliculaDetalleFragment"
+            app:destination="@id/peliculaDetalleFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/peliculaDetalleFragment"
+        android:name="com.arts.mapapeli.ui.peliculas.PeliculaDetalleFragment"
+        android:label="fragment_pelicula_detalle"
+        tools:layout="@layout/fragment_pelicula_detalle"/>
+
+</navigation>

@@ -12,8 +12,8 @@
   Muestra un listado de películas y cuando de click sobre una película puede obtener más información y detalle.
 
 **➢ Screenshots que visualice las vistas solicitadas.**
-[comment]: <> (![Screenshot](imagenes/uno.png))
+<!-- ![Screenshot](imagenes/uno.png) -->
 <p align="center">
-  <img src="imagenes/uno.png" width="350" title="Home">
+  <img src="imagenes/uno.png" width="350" title="Ho">
   <img src="" width="350" alt="">
 </p>

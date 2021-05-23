@@ -8,8 +8,8 @@
 
 * Propuesta Mapa
   Para visualizar la ubicación del usuario debe aceptar los permisos que solicita la app en tiempo de ejecución.
-* Propuesta Peliculas
-  Muestra un listado de peliculas y cuando de click sobre una pelicula puede obtener más informacion y detalle.
+* Propuesta Películas
+  Muestra un listado de películas y cuando de click sobre una película puede obtener más información y detalle.
 
 **➢ Screenshots que visualice las vistas solicitadas.**
-[Mapa - Home](https://github.com/mackgaru/MapaPeli/blob/master/Imagenes/Screenshot_20210522-184154.png)
+![Screenshot](uno.png)

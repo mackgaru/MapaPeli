@@ -3,6 +3,7 @@
 **➢ Requerimientos técnicos para construir el proyecto.**
 * Android Studio 4.2.1
 * Java JDK 11
+* Android version mínimo: Android 5.0 - 21LOLLIPOP - Api # 21
 
 **➢ Breve descripción de la responsabilidad de cada capa propuesta.**
 

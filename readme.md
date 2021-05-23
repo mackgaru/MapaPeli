@@ -14,6 +14,10 @@
 **➢ Screenshots que visualice las vistas solicitadas.**
 <!-- ![Screenshot](imagenes/uno.png) -->
 <p align="center">
-  <img src="imagenes/uno.png" width="350" title="Ho">
-  <img src="" width="350" alt="">
+  <img src="imagenes/1Home.png" width="350" title="Home">
+  <img src="imagenes/2Home_draw.png" width="350" alt="Draw">
+  <img src="imagenes/3Mapa_portrait.png" width="350" alt="Portrait">
+  <img src="imagenes/4Mapa_landscape.png" width="350" alt="LandScape">
+  <img src="imagenes/5Pelicula_lista.png" width="350" alt="Listado peliculas">
+  <img src="imagenes/6Pelicula_detalle.png" width="350" alt="Peliculas detalle">
 </p>

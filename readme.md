@@ -12,4 +12,4 @@
   Muestra un listado de películas y cuando de click sobre una película puede obtener más información y detalle.
 
 **➢ Screenshots que visualice las vistas solicitadas.**
-![Screenshot](uno.png)
+![Screenshot](imagenes/uno.png)

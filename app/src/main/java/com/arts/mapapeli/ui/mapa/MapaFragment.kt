@@ -23,7 +23,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import com.arts.mapapeli.R
 import com.arts.mapapeli.application.MyApp
@@ -35,6 +37,8 @@ import com.arts.mapapeli.databinding.FragmentMapaBinding
 import com.arts.mapapeli.domain.remote.RepositoryMapImpl
 import com.arts.mapapeli.presentation.MapaViewModel
 import com.arts.mapapeli.presentation.MapaViewModelFactory
+import com.arts.mapapeli.presentation.ShareViewModel
+import com.arts.mapapeli.ui.mapa.MapaDetalleFragment.Companion.newInstance
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -45,28 +49,32 @@ import java.util.*
 
 
 class MapaFragment : Fragment(),
-    OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener {
+    GoogleMap.OnMyLocationButtonClickListener,
+    GoogleMap.OnMyLocationClickListener,
+    OnMapReadyCallback{
 
     private var _binding: FragmentMapaBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var map: GoogleMap
     private lateinit var locationRequest: LocationRequest
-    private lateinit var fusedLocationCliente: FusedLocationProviderClient
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var mIsFirstTime = true
     private var userLocationAccuracyCircle: Circle? = null
     private var circleOptions = CircleOptions()
-    private var mGoogleApiProvider: GoogleApiProvider = GoogleApiProvider()
     private lateinit var mPolylineList: List<LatLng>
     private lateinit var mPolylineOptions: PolylineOptions
-    private lateinit var currenUsertLatLng: LatLng
-    private lateinit var clickMarkerUsuario: LatLng
     private var mMarker:Marker? = null
     private var address:String = ""
+    private lateinit var currenUsertLatLng: LatLng
+    private lateinit var clickMarkerUsuario: LatLng
+    private lateinit var mlocation: Location
 
     private val mapaViewModel by viewModels<MapaViewModel> {MapaViewModelFactory(
         RepositoryMapImpl(DataSource())
     )}
+    private val shareViewModel: ShareViewModel by activityViewModels() //para interacmbiar datos, despues de creado se asiga el mismo
+    //private val shareViewModel: ShareViewModel by viewModels() //perdilo al ambito del fragment, si otro fragment lo pide, se creara otro ambito
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,55 +83,104 @@ class MapaFragment : Fragment(),
     ): View? {
         _binding = FragmentMapaBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        Log.i("primero", "primero onCreateView")
         return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        var mMapFragment = childFragmentManager.findFragmentById(R.id.fragment_mapHome) as SupportMapFragment
-        mMapFragment.getMapAsync(this)
-        fusedLocationCliente = LocationServices.getFusedLocationProviderClient(requireActivity()) //esta propiedad sirve para iniciar o detener la ubicacion del usuario cada vez que sea conveniente. Pero primero se debe obtener los permisos de ubicacion por parte del usuario
-
+        Log.i("primero", "primero onViewCreated")
+        val mapFragment = childFragmentManager.findFragmentById(R.id.fragment_mapHome) as SupportMapFragment
+        mapFragment?.getMapAsync(this)
+        //Esta propiedad sirve para iniciar o detener la ubicacion del usuario cada vez que sea conveniente.
+        //Pero primero se debe obtener los permisos de ubicacion por parte del usuario
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
+    override fun onResume() {
+        super.onResume()
+        Log.i("primero", "primero onResume")
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
             if(getRotation(requireContext()).equals("vertical")){ //es vertical o portrait.
                 Log.i("orientacion", "vertical")
+            }else if(getRotation(requireContext()).equals("vertical_inversa")){
+                Log.i("orientacion", "vertical_inversa")
             }else if(getRotation(requireContext()).equals("horizontal")){
                 Log.i("orientacion", "horizontal")
+                //shareViewModel = ViewModelProvider(this).get(ShareViewModel::class.java)
+                //shareViewModel.updateData("Maggiver Acevedo")
+
+                if(shareViewModel.dataShareLiveData != null){
+                    Log.i("livedata", "infor")
+                    shareViewModel.dataShareLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+                        Log.i("livedata", "infor ${it.routes}")
+                    })
+                }
+                shareViewModel.getData().observe(viewLifecycleOwner, androidx.lifecycle.Observer{
+                    Log.i("orientacion", "$it")
+                })
+            }else{
+                Log.i("orientacion", "horizontal_inversa")
+                //shareViewModel.updateData("Daniel Acevedo")
+                shareViewModel.dataShareLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer{
+                    Log.i("orientacion", "$it")
+                })
             }
         }
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
-    //ESTE METODO FUE IMPLEMENTADO POR LA INTERFAZ OnMapReadyCallback
-    //ESTABLECE UNA INSTANCIA DEL MAPA DE GOOGLE ASOCIADO CON MapFragment o MapView y el metodo onMapReady se activa cuando el mapa esta listo para usarse
+    //Este metodo fue implementado por la interfaz OnMapReadyCallback
+    //Establece una instancia del mapa de google asociado con MapFragment o MapView y el metodo onMapReady
+    //Se activa cuando el mapa esta listo para usarse
     override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        map.mapType = GoogleMap.MAP_TYPE_NORMAL
-        map.uiSettings.isZoomControlsEnabled = true //para mostrar los botones de zoom (+) (-) en el mapa
-        map.uiSettings.isRotateGesturesEnabled = true
-        map.uiSettings.isMyLocationButtonEnabled = true  // se complementa con = mMap.isMyLocationEnabled = true
+        Log.i("primero", "primero onMapReady")
+        map = googleMap ?: return
+        if(!::map.isInitialized){
+            return
+        }else{
+            map.mapType = GoogleMap.MAP_TYPE_NORMAL
+            map.setOnMyLocationButtonClickListener(this)
+            map.setOnMyLocationClickListener(this)
 
-        locationRequest = LocationRequest()
-        locationRequest.interval = 1000 //tiempo en que se va a estar actualizando la ubicacion del usuario en el mapa
-        locationRequest.fastestInterval = 1000
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY //establecer la prioridad que va a tener el GPS, para estar trabajando en la actualizacion de la ubicacion y se debe establecer la priodidad
-        locationRequest.smallestDisplacement = 5F //establece el desplazamiento minimo entre actualizaciones de ubicacion en metros
+            /*Controls UI*/
+            map.uiSettings.isZoomControlsEnabled = true //para mostrar los botones de zoom (+) (-) en el mapa
+            map.uiSettings.isCompassEnabled = false //habilitar/deshabilitar brujula
+            map.uiSettings.isMyLocationButtonEnabled = true  //se complementa con: mMap.isMyLocationEnabled=true
+            map.uiSettings.isIndoorLevelPickerEnabled = false //selector de piso cuando el usuario ve un mapa de interiores
+            /*Toolbar map*/
+            map.uiSettings.isMapToolbarEnabled = false //aparece en la parte inferior derecha del mapa cuando el usuario presiona un marcador
+            /*Gesture map*/
+            map.uiSettings.isRotateGesturesEnabled = true //gestos de rotacion
+            map.uiSettings.isZoomGesturesEnabled = true //gestos de zoom
+            map.uiSettings.isScrollGesturesEnabled = true //para desplazarse por el mapa
 
-        Log.i("mapa", "paso 1: onMapReay")
-        startLocation()
-        map.setOnMyLocationButtonClickListener(this)
-        map.setOnMyLocationClickListener(this)
-
-        val options = PolylineOptions()
-        options.color(Color.RED)
-        options.width(5f)
+            locationRequest = LocationRequest()
+            locationRequest.interval = 1000 //tiempo en que se va a estar actualizando la ubicacion del usuario en el mapa
+            locationRequest.fastestInterval = 1000
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY //establecer la prioridad que va a tener el GPS, para estar trabajando en la actualizacion de la ubicacion y se debe establecer la priodidad
+            locationRequest.smallestDisplacement = 5F //establece el desplazamiento minimo entre actualizaciones de ubicacion en metros
+            startLocation()
+            val options = PolylineOptions()
+            options.color(Color.RED)
+            options.width(5f)
+        }
+    }
+    override fun onMyLocationButtonClick(): Boolean {
+        Toast.makeText(requireContext(), "Centrar mi ubicación", Toast.LENGTH_SHORT).show()
+        return false
+    }
+    override fun onMyLocationClick(p0: Location) {
+        Toast.makeText(
+            requireContext(),
+            "Mi ubicación ${p0.latitude}, ${p0.longitude}",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
-    //CALLBACK QUE VA ESTAR ESCUCHANDO CADA VEZ QUE EL USUARIO SE MUEVA
+    //CallBacK que va estar escuchando cada vez que el usuario se mueva
     private var mLocationCallback: LocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult){
             super.onLocationResult(locationResult)
@@ -132,9 +189,10 @@ class MapaFragment : Fragment(),
                 if(context?.applicationContext != null){
                     if(mIsFirstTime){
                         mIsFirstTime = false
+                        mlocation = location
                         //OBTENER LA LOCALIZACION DEL USUARIO EN TIEIMPO REAL
-                        currenUsertLatLng  = LatLng(location.latitude, location.longitude)
-                        showMarkerCustom(location, currenUsertLatLng)
+                        currenUsertLatLng  = LatLng(mlocation.latitude, mlocation.longitude)
+                        showMarkerCustom(mlocation, currenUsertLatLng)
                         map.moveCamera(
                             CameraUpdateFactory.newCameraPosition(
                                 CameraPosition.Builder()
@@ -176,7 +234,7 @@ class MapaFragment : Fragment(),
                         //MOSTRAR MARKER, CON INFORMACION CUANDO SE DA CLICK SOBRE CUALQUIER PUNTO DE INTERES
                         map.setOnPoiClickListener{
                             map.clear()
-                            showMarkerCustom(location, currenUsertLatLng)
+                            showMarkerCustom(mlocation, currenUsertLatLng)
                             val poiMarker = map.addMarker(
                                 MarkerOptions().position(it.latLng).title(
                                     it.name
@@ -191,12 +249,10 @@ class MapaFragment : Fragment(),
     }
     private fun showMarkerCustom(location: Location, mCurrentLatLng: LatLng) {
         //preguntamos si ya se establecio un marcador en el mapa
-
         if(mMarker != null){
             mMarker!!.remove()
             map.clear()
         }
-
         val geocoder = Geocoder(context, Locale.getDefault())
         var addresses: List<Address> =
             geocoder.getFromLocation(mCurrentLatLng.latitude, mCurrentLatLng.longitude, 1)
@@ -290,34 +346,11 @@ class MapaFragment : Fragment(),
                     }
                 }
             })
-
-        /*mGoogleApiProvider.getDirections(location1, location2)
-            .enqueue(object : Callback<String?> {
-                override fun onResponse(call: Call<String?>, response: Response<String?>) {
-                    try {
-
-                    } catch (e: Exception) {
-                        Log.i("Error", "Error encontrado::: " + e.message)
-                    }
-                }
-                override fun onFailure(call: Call<String?>, t: Throwable) {}
-            })*/
     }
 
-    override fun onMyLocationButtonClick(): Boolean {
-        Toast.makeText(requireContext(), "Centrar mi ubicación", Toast.LENGTH_SHORT).show()
-        return false
-    }
-    override fun onMyLocationClick(p0: Location) {
-        Toast.makeText(
-            requireContext(),
-            "Mi ubicación ${p0.latitude}, ${p0.longitude}",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    //METODO PARA INICIAR EL ESCUCHADOR DE LA UBICACION DEL DISPOSITIVO
+    //Metodo para iniciar el escuchador del la ubicacion del dispositivo
     private fun startLocation(){
+        Log.i("primero", "primero startLocation")
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if(ContextCompat.checkSelfPermission(
                     requireActivity(),
@@ -325,15 +358,14 @@ class MapaFragment : Fragment(),
                 ) == PackageManager.PERMISSION_GRANTED){
                 if(gpsActivated()){
                     //cuando este evento se ejecuta va entrar a mLocationCallback y va obtener la localizacion del usuario en tiempo real
-                    fusedLocationCliente.requestLocationUpdates(
+                    fusedLocationProviderClient.requestLocationUpdates(
                         locationRequest,
                         mLocationCallback,
                         Looper.myLooper()
                     ) //La clase Lopper basicamente se utiliza para decir que vamos a mandar varios mensajes al hilo de ejecucion, por eso utilizamos el Runnable para ejecutar ciclicamente la actualizacion del GPS: https://www.it-swarm.dev/es/android/cual-es-el-proposito-de-looper-y-como-usarlo/939681342/
 
                     map.isMyLocationEnabled = true //se establece mostrar el punto azul de ubicacion despues de tener los permisos por el usuario
-
-                    fusedLocationCliente.lastLocation
+                    fusedLocationProviderClient.lastLocation
 
                 }else{
                     showAlertDialogNoActiveGPS()
@@ -345,7 +377,7 @@ class MapaFragment : Fragment(),
             }
         }else{
             if(gpsActivated()){
-                fusedLocationCliente.requestLocationUpdates(
+                fusedLocationProviderClient.requestLocationUpdates(
                     locationRequest,
                     mLocationCallback,
                     Looper.myLooper()
@@ -357,7 +389,7 @@ class MapaFragment : Fragment(),
         }
     }
 
-    //METODO PARA SABER SI EL USAURIO TIENE EL GPS ACTIVADO
+    //Metodo para saber si el usuario tiene el GPS activado
     private fun gpsActivated(): Boolean {
         var isActive: Boolean = false
         var locationManager: LocationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -368,7 +400,7 @@ class MapaFragment : Fragment(),
         return isActive
     }
 
-    //METODO PARA IR A LAS CONFIGURACIONES ACTIVAR EL GPS, EN CASO DE QUE EL USUARIO NO TENGA ACTIVO EL GPS
+    //Metodo para ir a las configraciones activar el GPS, en caso de que el usuario no tenga activo el GPS
     private fun showAlertDialogNoActiveGPS(){
         AlertDialog.Builder(requireContext())
             .setTitle("ACTIVAR GPS")
@@ -383,7 +415,7 @@ class MapaFragment : Fragment(),
             }.show()
     }
 
-    //METODO LANZADA POR showAlertDialogNoActiveGPS()
+    //Metodo lanzado por showAlertDialogNoActiveGPS()
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         //preguntamos si el usuario quiere activar el GPS
@@ -404,7 +436,7 @@ class MapaFragment : Fragment(),
                 // for ActivityCompat#requestPermissions for more details.
                 return
             }
-            fusedLocationCliente.requestLocationUpdates(
+            fusedLocationProviderClient.requestLocationUpdates(
                 locationRequest,
                 mLocationCallback,
                 Looper.myLooper()
@@ -489,7 +521,7 @@ class MapaFragment : Fragment(),
                     if(gpsActivated()){
                         // Permission is granted. Continue the action or workflow in your app.
                         // https://www.udemy.com/course/crea-una-app-como-uber-utilizando-android-studio-y-firebase/learn/lecture/18539638#questions/13014822
-                        fusedLocationCliente.requestLocationUpdates(
+                        fusedLocationProviderClient.requestLocationUpdates(
                             locationRequest,
                             mLocationCallback,
                             Looper.myLooper()
@@ -570,7 +602,7 @@ class MapaFragment : Fragment(),
             return when (rotation) {
                 Surface.ROTATION_0 -> "vertical"
                 Surface.ROTATION_90 -> "horizontal"
-                Surface.ROTATION_180 -> "vertical inversa"
+                Surface.ROTATION_180 -> "vertical_inversa"
                 else -> "horizontal inversa"
             }
         }
